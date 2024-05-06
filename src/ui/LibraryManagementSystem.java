@@ -66,7 +66,7 @@ public class LibraryManagementSystem extends JFrame {
 
         add(mainPanel);
     }
-
+/*
     private void addBook() {
         String title = titleField.getText();
         String author = authorField.getText();
@@ -86,6 +86,8 @@ public class LibraryManagementSystem extends JFrame {
             JOptionPane.showMessageDialog(null, "Failed to add book.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
+ */
 
     private void searchBook() {
         String searchTerm = searchField.getText().trim();
