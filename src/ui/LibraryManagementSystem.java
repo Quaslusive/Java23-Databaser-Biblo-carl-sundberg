@@ -97,11 +97,18 @@ public class LibraryManagementSystem extends JFrame {
             statement.setString(1, "%" + searchTerm + "%");
             statement.setString(2, "%" + searchTerm + "%");
             ResultSet resultSet = statement.executeQuery();
+
             StringBuilder result = new StringBuilder();
             while (resultSet.next()) {
                 String title = resultSet.getString("title");
                 String author = resultSet.getString("author");
-                result.append("Title: ").append(title).append(", Author: ").append(author).append("\n");
+                int publicationYear = resultSet.getInt("publication_year");
+                String status = resultSet.getString("status");
+                result.append("Title: ").append(title).append(", Author: ").append(author)
+                        .append(", Publication Year: ").append(publicationYear)
+                        .append(", Status: ").append(status).append("\n");
+
+
             }
             if (result.length() > 0) {
                 bookListArea.setText(result.toString());
@@ -112,6 +119,7 @@ public class LibraryManagementSystem extends JFrame {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, "Failed to search books.", "Error", JOptionPane.ERROR_MESSAGE);
         }
+        System.out.println(searchTerm);
     }
 
     private void borrowBook() {
@@ -150,7 +158,7 @@ public class LibraryManagementSystem extends JFrame {
         }
     }
 
-    private void updateBookList() {
+    public void updateBookList() {
         try {
             String query = "SELECT * FROM books";
             Statement statement = connection.createStatement();
@@ -167,5 +175,6 @@ public class LibraryManagementSystem extends JFrame {
             JOptionPane.showMessageDialog(null, "Failed to fetch books.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
 
 }

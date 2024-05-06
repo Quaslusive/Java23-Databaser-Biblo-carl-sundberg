@@ -6,6 +6,7 @@ public class Main {
 
         LibraryManagementSystem gui = new LibraryManagementSystem();
         gui.setVisible(true);
+        gui.updateBookList();
 
         System.out.println("Hello world!");
     }
