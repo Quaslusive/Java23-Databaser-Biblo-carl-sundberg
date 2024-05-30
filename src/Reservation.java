@@ -1,97 +1,42 @@
-import database.DatabaseManager;
-
+/*
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import database.DatabaseManager;
 
 public class Reservation {
-    private int id;
     private int userId;
     private int bookId;
-    private LocalDate reservedDate;
+    private LocalDate reservationDate;
+    private LocalDate expirationDate;
 
-    public Reservation(int userId, int bookId) {
-        this.userId = userId;
-        this.bookId = bookId;
-        this.reservedDate = LocalDate.now();
-    }
+    // Constructors, getters, and setters
 
     public static boolean reserveBook(int userId, int bookId) {
-        if (Loan.isBookLoaned(bookId) && !isBookReserved(bookId)) {
-            try (Connection conn = DatabaseManager.getConnection()) {
-                String query = "INSERT INTO reservations (user_id, book_id, reserved_date) VALUES (?, ?, ?)";
-                PreparedStatement stmt = conn.prepareStatement(query);
-                stmt.setInt(1, userId);
-                stmt.setInt(2, bookId);
-                stmt.setDate(3, Date.valueOf(LocalDate.now()));
-                stmt.executeUpdate();
-                return true;
-            } catch (SQLException e) {
-                e.printStackTrace();
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement checkStmt = conn.prepareStatement("SELECT * FROM reservations WHERE book_id = ? AND expiration_date > ?")) {
+            checkStmt.setInt(1, bookId);
+            checkStmt.setDate(2, Date.valueOf(LocalDate.now()));
+            ResultSet rs = checkStmt.executeQuery();
+            if (rs.next()) {
+                return false; // Book is already reserved
             }
-        }
-        return false;
-    }
 
-    public static boolean isBookReserved(int bookId) {
-        try (Connection conn = DatabaseManager.getConnection()) {
-            String query = "SELECT * FROM reservations WHERE book_id = ? AND reserved_date > ?";
-            PreparedStatement stmt = conn.prepareStatement(query);
-            stmt.setInt(1, bookId);
-            stmt.setDate(2, Date.valueOf(LocalDate.now().minusDays(30)));
-            ResultSet rs = stmt.executeQuery();
-            return rs.next();
+            PreparedStatement reserveStmt = conn.prepareStatement("INSERT INTO reservations (user_id, book_id, reservation_date, expiration_date) VALUES (?, ?, ?, ?)");
+            reserveStmt.setInt(1, userId);
+            reserveStmt.setInt(2, bookId);
+            reserveStmt.setDate(3, Date.valueOf(LocalDate.now()));
+            reserveStmt.setDate(4, Date.valueOf(LocalDate.now().plusDays(30)));
+            reserveStmt.executeUpdate();
+            return true;
         } catch (SQLException e) {
             e.printStackTrace();
-        }
-        return false;
-    }
-
-    public static void removeExpiredReservations() {
-        try (Connection conn = DatabaseManager.getConnection()) {
-            String query = "DELETE FROM reservations WHERE reserved_date < ?";
-            PreparedStatement stmt = conn.prepareStatement(query);
-            stmt.setDate(1, Date.valueOf(LocalDate.now().minusDays(30)));
-            stmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
+            return false;
         }
     }
 
-    public static List<Reservation> getUserReservations(int userId) {
-        List<Reservation> reservations = new ArrayList<>();
-        try (Connection conn = DatabaseManager.getConnection()) {
-            String query = "SELECT * FROM reservations WHERE user_id = ? AND reserved_date > ?";
-            PreparedStatement stmt = conn.prepareStatement(query);
-            stmt.setInt(1, userId);
-            stmt.setDate(2, Date.valueOf(LocalDate.now().minusDays(30)));
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                Reservation reservation = new Reservation(userId, rs.getInt("book_id"));
-                reservation.id = rs.getInt("id");
-                reservation.reservedDate = rs.getDate("reserved_date").toLocalDate();
-                reservations.add(reservation);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return reservations;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public int getUserId() {
-        return userId;
-    }
-
-    public int getBookId() {
-        return bookId;
-    }
-
-    public LocalDate getReservedDate() {
-        return reservedDate;
-    }
+    // Additional methods for managing reservations if needed
 }
+
+ */

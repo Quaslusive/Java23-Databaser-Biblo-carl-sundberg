@@ -94,9 +94,9 @@ public class LibrarySystem {
     }
 
     private void searchBooks() {
-        String searchTerm = JOptionPane.showInputDialog(frame, "Enter search term:");
-        if (searchTerm != null && !searchTerm.isEmpty()) {
-            List<Book> books = Book.searchBooks(searchTerm);
+        String title = JOptionPane.showInputDialog(frame, "Enter book title:");
+        if (title != null && !title.isEmpty()) {
+            List<Book> books = Book.searchBooksByTitle(title);
             StringBuilder message = new StringBuilder("Search Results:\n");
             for (Book book : books) {
                 message.append("ID: ").append(book.getId())
@@ -108,96 +108,97 @@ public class LibrarySystem {
     }
 
     private void loanBook() {
-        String bookIdStr = JOptionPane.showInputDialog(frame, "Enter Book ID to loan:");
-        if (bookIdStr != null) {
-            int bookId = Integer.parseInt(bookIdStr);
-            boolean success = Loan.loanBook(loggedInUser.getId(), bookId);
+        String bookTitle = JOptionPane.showInputDialog(frame, "Enter Book Title to loan:");
+        if (bookTitle != null && !bookTitle.isEmpty()) {
+            List<Book> books = Book.searchBooksByTitle(bookTitle);
+            if (books.isEmpty()) {
+                JOptionPane.showMessageDialog(frame, "No books found with the given title.");
+                return;
+            }
+
+            Book book = books.get(0); // Assuming we take the first book if there are multiple with the same title
+            boolean success = Loan.loanBook(loggedInUser.getId(), book.getId());
             if (success) {
                 JOptionPane.showMessageDialog(frame, "Book loaned successfully.");
             } else {
-                boolean reserved = Reservation.reserveBook(loggedInUser.getId(), bookId);
-                if (reserved) {
-                    JOptionPane.showMessageDialog(frame, "Book is currently loaned out. You have reserved the book.");
-                } else {
-                    JOptionPane.showMessageDialog(frame, "Failed to loan the book.");
+                JOptionPane.showMessageDialog(frame, "Failed to loan the book. It might be already loaned out.");
+            }
+        }
+        }
+
+                private void returnBook () {
+                    String bookIdStr = JOptionPane.showInputDialog(frame, "Enter Book ID to return:");
+                    if (bookIdStr != null) {
+                        int bookId = Integer.parseInt(bookIdStr);
+                        Loan.returnBook(bookId);
+                        JOptionPane.showMessageDialog(frame, "Book returned successfully.");
+                    }
+                }
+
+                private void viewLoans () {
+                    List<Loan> loans = Loan.getUserLoans(loggedInUser.getId());
+                    StringBuilder message = new StringBuilder("Loan History:\n");
+                    for (Loan loan : loans) {
+                        message.append("Book ID: ").append(loan.getBookId())
+                                .append(", Loan Date: ").append(loan.getLoanDate())
+                                .append(", Return Date: ").append(loan.getReturnDate()).append("\n");
+                    }
+                    JOptionPane.showMessageDialog(frame, message.toString());
+                }
+
+                private void viewStatus () {
+                    List<Loan> loans = Loan.getUserLoans(loggedInUser.getId());
+                    StringBuilder message = new StringBuilder("Current Loans:\n");
+                    for (Loan loan : loans) {
+                        LocalDate dueDate = loan.getLoanDate().plusDays(30);  // Assuming all media has 30 days loan period for simplicity
+                        message.append("Book ID: ").append(loan.getBookId())
+                                .append(", Loan Date: ").append(loan.getLoanDate())
+                                .append(", Due Date: ").append(dueDate).append("\n");
+                    }
+                    JOptionPane.showMessageDialog(frame, message.toString());
+                }
+
+                private void updateProfile () {
+                    JPanel panel = new JPanel(new GridLayout(4, 2));
+
+                    JLabel nameLabel = new JLabel("Name:");
+                    JTextField nameText = new JTextField(loggedInUser.getName());
+
+                    JLabel emailLabel = new JLabel("Email:");
+                    JTextField emailText = new JTextField(loggedInUser.getEmail());
+
+                    JLabel passwordLabel = new JLabel("Password:");
+                    JPasswordField passwordText = new JPasswordField();
+
+                    JButton updateButton = new JButton("Update");
+                    updateButton.addActionListener(e -> {
+                        String name = nameText.getText();
+                        String email = emailText.getText();
+                        String password = new String(passwordText.getPassword());
+
+                        loggedInUser.setName(name);
+                        loggedInUser.setEmail(email);
+                        loggedInUser.setPassword(password);
+
+                        if (loggedInUser.updateProfile(name, email, password)) {
+                            JOptionPane.showMessageDialog(frame, "Profile updated successfully.");
+                        } else {
+                            JOptionPane.showMessageDialog(frame, "Failed to update profile.");
+                        }
+                    });
+
+                    panel.add(nameLabel);
+                    panel.add(nameText);
+                    panel.add(emailLabel);
+                    panel.add(emailText);
+                    panel.add(passwordLabel);
+                    panel.add(passwordText);
+                    panel.add(updateButton);
+
+                    frame.getContentPane().removeAll();
+                    frame.getContentPane().add(panel, BorderLayout.CENTER);
+
+                    frame.revalidate();
+                    frame.repaint();
                 }
             }
-        }
-    }
-
-    private void returnBook() {
-        String bookIdStr = JOptionPane.showInputDialog(frame, "Enter Book ID to return:");
-        if (bookIdStr != null) {
-            int bookId = Integer.parseInt(bookIdStr);
-            Loan.returnBook(bookId);
-            JOptionPane.showMessageDialog(frame, "Book returned successfully.");
-        }
-    }
-
-    private void viewLoans() {
-        List<Loan> loans = Loan.getUserLoans(loggedInUser.getId());
-        StringBuilder message = new StringBuilder("Loan History:\n");
-        for (Loan loan : loans) {
-            message.append("Book ID: ").append(loan.getBookId())
-                    .append(", Loan Date: ").append(loan.getLoanDate())
-                    .append(", Return Date: ").append(loan.getReturnDate()).append("\n");
-        }
-        JOptionPane.showMessageDialog(frame, message.toString());
-    }
-
-    private void viewStatus() {
-        List<Loan> loans = Loan.getUserLoans(loggedInUser.getId());
-        StringBuilder message = new StringBuilder("Current Loans:\n");
-        for (Loan loan : loans) {
-            LocalDate dueDate = loan.getLoanDate().plusDays(30);  // Assuming all media has 30 days loan period for simplicity
-            message.append("Book ID: ").append(loan.getBookId())
-                    .append(", Loan Date: ").append(loan.getLoanDate())
-                    .append(", Due Date: ").append(dueDate).append("\n");
-        }
-        JOptionPane.showMessageDialog(frame, message.toString());
-    }
-
-    private void updateProfile() {
-        JPanel panel = new JPanel(new GridLayout(4, 2));
-
-        JLabel nameLabel = new JLabel("Name:");
-        JTextField nameText = new JTextField(loggedInUser.getName());
-
-        JLabel emailLabel = new JLabel("Email:");
-        JTextField emailText = new JTextField(loggedInUser.getEmail());
-
-        JLabel passwordLabel = new JLabel("Password:");
-        JPasswordField passwordText = new JPasswordField();
-
-        JButton updateButton = new JButton("Update");
-        updateButton.addActionListener(e -> {
-            String name = nameText.getText();
-            String email = emailText.getText();
-            String password = new String(passwordText.getPassword());
-
-            loggedInUser.setName(name);
-            loggedInUser.setEmail(email);
-            loggedInUser.setPassword(password);
-
-            if (loggedInUser.updateProfile(name, email, password)) {
-                JOptionPane.showMessageDialog(frame, "Profile updated successfully.");
-            } else {
-                JOptionPane.showMessageDialog(frame, "Failed to update profile.");
-            }
-        });
-
-        panel.add(nameLabel);
-        panel.add(nameText);
-        panel.add(emailLabel);
-        panel.add(emailText);
-        panel.add(passwordLabel);
-        panel.add(passwordText);
-        panel.add(updateButton);
-
-        frame.getContentPane().removeAll();
-        frame.getContentPane().add(panel, BorderLayout.CENTER);
-
-        frame.revalidate();
-        frame.repaint();
-    }
-}
