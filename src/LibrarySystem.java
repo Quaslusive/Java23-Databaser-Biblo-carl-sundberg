@@ -1,6 +1,6 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.time.LocalDate;
 import java.util.List;
 
 public class LibrarySystem {
@@ -8,197 +8,182 @@ public class LibrarySystem {
     private User loggedInUser;
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new LibrarySystem().createAndShowGUI());
+        EventQueue.invokeLater(() -> {
+            try {
+                LibrarySystem window = new LibrarySystem();
+                window.frame.setVisible(true);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
-    public void createAndShowGUI() {
-        frame = new JFrame("Library System");
+    public LibrarySystem() {
+        initialize();
+    }
+
+    private void initialize() {
+        frame = new JFrame();
+        frame.setBounds(100, 100, 450, 300);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(800, 600);
-
         showLoginScreen();
-
-        frame.setVisible(true);
     }
 
     private void showLoginScreen() {
         JPanel panel = new JPanel();
-        frame.getContentPane().removeAll();
         frame.getContentPane().add(panel, BorderLayout.CENTER);
-
-        panel.setLayout(new GridLayout(3, 2));
+        panel.setLayout(new GridLayout(3, 2, 10, 10));
 
         JLabel userLabel = new JLabel("Username:");
-        JTextField userText = new JTextField(20);
+        panel.add(userLabel);
+
+        JTextField userText = new JTextField();
+        panel.add(userText);
+        userText.setColumns(10);
+
         JLabel passwordLabel = new JLabel("Password:");
-        JPasswordField passwordText = new JPasswordField(20);
+        panel.add(passwordLabel);
+
+        JPasswordField passwordText = new JPasswordField();
+        panel.add(passwordText);
 
         JButton loginButton = new JButton("Login");
         loginButton.addActionListener(e -> {
             String username = userText.getText();
             String password = new String(passwordText.getPassword());
 
-            User user = new User(username, password);
-            if (user.login()) {
+            User user = User.login(username, password);
+            if (user != null) {
                 loggedInUser = user;
-                showMainMenu();
+                showMainScreen();
             } else {
-                JOptionPane.showMessageDialog(frame, "Invalid login. Please try again.");
+                JOptionPane.showMessageDialog(frame, "Invalid username or password.");
             }
         });
-
-        panel.add(userLabel);
-        panel.add(userText);
-        panel.add(passwordLabel);
-        panel.add(passwordText);
         panel.add(loginButton);
 
         frame.revalidate();
         frame.repaint();
     }
 
-    private void showMainMenu() {
-        JPanel panel = new JPanel();
-        frame.getContentPane().removeAll();
-        frame.getContentPane().add(panel, BorderLayout.CENTER);
-
-        panel.setLayout(new GridLayout(6, 1));
-
-        JButton searchBooksButton = new JButton("Search Books");
-        searchBooksButton.addActionListener(e -> searchBooks());
-
-        JButton loanBookButton = new JButton("Loan a Book");
-        loanBookButton.addActionListener(e -> loanBook());
-
-        JButton returnBookButton = new JButton("Return a Book");
-        returnBookButton.addActionListener(e -> returnBook());
-
-        JButton viewLoansButton = new JButton("View Loan History");
-        viewLoansButton.addActionListener(e -> viewLoans());
-
-        JButton viewStatusButton = new JButton("View Loan Status");
-        viewStatusButton.addActionListener(e -> viewStatus());
+    private void showMainScreen() {
+        JPanel panel = new JPanel(new BorderLayout());
+        JButton logoutButton = new JButton("Logout");
+        logoutButton.addActionListener(e -> {
+            loggedInUser = null;
+            showLoginScreen();
+        });
 
         JButton updateProfileButton = new JButton("Update Profile");
         updateProfileButton.addActionListener(e -> updateProfile());
 
-        panel.add(searchBooksButton);
-        panel.add(loanBookButton);
-        panel.add(returnBookButton);
-        panel.add(viewLoansButton);
-        panel.add(viewStatusButton);
-        panel.add(updateProfileButton);
+        JPanel topPanel = new JPanel();
+        topPanel.add(logoutButton);
+        topPanel.add(updateProfileButton);
+
+        panel.add(topPanel, BorderLayout.NORTH);
+
+        // Create the table to display books
+        String[] columnNames = {"ID", "Title", "Author", "Loan Status"};
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+        JTable table = new JTable(model);
+
+        List<Book> books = Book.searchBooksByTitle(""); // Fetch all books
+        for (Book book : books) {
+            String loanStatus = Loan.isBookLoaned(book.getId()) ? "Loaned" : "Available";
+            model.addRow(new Object[]{book.getId(), book.getTitle(), book.getAuthor(), loanStatus});
+        }
+
+        JScrollPane scrollPane = new JScrollPane(table);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        JButton loanBookButton = new JButton("Loan Book");
+        loanBookButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow != -1) {
+                int bookId = (int) model.getValueAt(selectedRow, 0);
+                if (Loan.loanBook(loggedInUser.getId(), bookId)) {
+                    JOptionPane.showMessageDialog(frame, "Book loaned successfully.");
+                    model.setValueAt("Loaned", selectedRow, 3);
+                } else {
+                    JOptionPane.showMessageDialog(frame, "Failed to loan book. It might be already loaned out.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(frame, "Please select a book to loan.");
+            }
+        });
+
+        JButton returnBookButton = new JButton("Return Book");
+        returnBookButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow != -1) {
+                int bookId = (int) model.getValueAt(selectedRow, 0);
+                Loan.returnBook(bookId);
+                JOptionPane.showMessageDialog(frame, "Book returned successfully.");
+                model.setValueAt("Available", selectedRow, 3);
+            } else {
+                JOptionPane.showMessageDialog(frame, "Please select a book to return.");
+            }
+        });
+
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.add(loanBookButton);
+        bottomPanel.add(returnBookButton);
+
+        panel.add(bottomPanel, BorderLayout.SOUTH);
+
+        frame.getContentPane().removeAll();
+        frame.getContentPane().add(panel);
 
         frame.revalidate();
         frame.repaint();
     }
 
-    private void searchBooks() {
-        String title = JOptionPane.showInputDialog(frame, "Enter book title:");
-        if (title != null && !title.isEmpty()) {
-            List<Book> books = Book.searchBooksByTitle(title);
-            StringBuilder message = new StringBuilder("Search Results:\n");
-            for (Book book : books) {
-                message.append("ID: ").append(book.getId())
-                        .append(", Title: ").append(book.getTitle())
-                        .append(", Author: ").append(book.getAuthor()).append("\n");
-            }
-            JOptionPane.showMessageDialog(frame, message.toString());
-        }
-    }
+    private void updateProfile() {
+        JPanel panel = new JPanel(new GridLayout(5, 2));
 
-    private void loanBook() {
-        String bookTitle = JOptionPane.showInputDialog(frame, "Enter Book Title to loan:");
-        if (bookTitle != null && !bookTitle.isEmpty()) {
-            List<Book> books = Book.searchBooksByTitle(bookTitle);
-            if (books.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "No books found with the given title.");
-                return;
-            }
+        JLabel nameLabel = new JLabel("Name:");
+        JTextField nameText = new JTextField(loggedInUser.getName());
 
-            Book book = books.get(0); // Assuming we take the first book if there are multiple with the same title
-            boolean success = Loan.loanBook(loggedInUser.getId(), book.getId());
-            if (success) {
-                JOptionPane.showMessageDialog(frame, "Book loaned successfully.");
+        JLabel emailLabel = new JLabel("Email:");
+        JTextField emailText = new JTextField(loggedInUser.getEmail());
+
+        JLabel passwordLabel = new JLabel("Password:");
+        JPasswordField passwordText = new JPasswordField();
+
+        JButton updateButton = new JButton("Update");
+        updateButton.addActionListener(e -> {
+            String name = nameText.getText();
+            String email = emailText.getText();
+            String password = new String(passwordText.getPassword());
+
+            loggedInUser.setName(name);
+            loggedInUser.setEmail(email);
+            loggedInUser.setPassword(password);
+
+            if (loggedInUser.updateProfile(name, email, password)) {
+                JOptionPane.showMessageDialog(frame, "Profile updated successfully.");
             } else {
-                JOptionPane.showMessageDialog(frame, "Failed to loan the book. It might be already loaned out.");
+                JOptionPane.showMessageDialog(frame, "Failed to update profile.");
             }
-        }
-        }
+        });
 
-                private void returnBook () {
-                    String bookIdStr = JOptionPane.showInputDialog(frame, "Enter Book ID to return:");
-                    if (bookIdStr != null) {
-                        int bookId = Integer.parseInt(bookIdStr);
-                        Loan.returnBook(bookId);
-                        JOptionPane.showMessageDialog(frame, "Book returned successfully.");
-                    }
-                }
+        JButton backButton = new JButton("Tillbaka");
+        backButton.addActionListener(e -> showMainScreen());
 
-                private void viewLoans () {
-                    List<Loan> loans = Loan.getUserLoans(loggedInUser.getId());
-                    StringBuilder message = new StringBuilder("Loan History:\n");
-                    for (Loan loan : loans) {
-                        message.append("Book ID: ").append(loan.getBookId())
-                                .append(", Loan Date: ").append(loan.getLoanDate())
-                                .append(", Return Date: ").append(loan.getReturnDate()).append("\n");
-                    }
-                    JOptionPane.showMessageDialog(frame, message.toString());
-                }
+        panel.add(nameLabel);
+        panel.add(nameText);
+        panel.add(emailLabel);
+        panel.add(emailText);
+        panel.add(passwordLabel);
+        panel.add(passwordText);
+        panel.add(updateButton);
+        panel.add(backButton);
 
-                private void viewStatus () {
-                    List<Loan> loans = Loan.getUserLoans(loggedInUser.getId());
-                    StringBuilder message = new StringBuilder("Current Loans:\n");
-                    for (Loan loan : loans) {
-                        LocalDate dueDate = loan.getLoanDate().plusDays(30);  // Assuming all media has 30 days loan period for simplicity
-                        message.append("Book ID: ").append(loan.getBookId())
-                                .append(", Loan Date: ").append(loan.getLoanDate())
-                                .append(", Due Date: ").append(dueDate).append("\n");
-                    }
-                    JOptionPane.showMessageDialog(frame, message.toString());
-                }
+        frame.getContentPane().removeAll();
+        frame.getContentPane().add(panel, BorderLayout.CENTER);
 
-                private void updateProfile () {
-                    JPanel panel = new JPanel(new GridLayout(4, 2));
-
-                    JLabel nameLabel = new JLabel("Name:");
-                    JTextField nameText = new JTextField(loggedInUser.getName());
-
-                    JLabel emailLabel = new JLabel("Email:");
-                    JTextField emailText = new JTextField(loggedInUser.getEmail());
-
-                    JLabel passwordLabel = new JLabel("Password:");
-                    JPasswordField passwordText = new JPasswordField();
-
-                    JButton updateButton = new JButton("Update");
-                    updateButton.addActionListener(e -> {
-                        String name = nameText.getText();
-                        String email = emailText.getText();
-                        String password = new String(passwordText.getPassword());
-
-                        loggedInUser.setName(name);
-                        loggedInUser.setEmail(email);
-                        loggedInUser.setPassword(password);
-
-                        if (loggedInUser.updateProfile(name, email, password)) {
-                            JOptionPane.showMessageDialog(frame, "Profile updated successfully.");
-                        } else {
-                            JOptionPane.showMessageDialog(frame, "Failed to update profile.");
-                        }
-                    });
-
-                    panel.add(nameLabel);
-                    panel.add(nameText);
-                    panel.add(emailLabel);
-                    panel.add(emailText);
-                    panel.add(passwordLabel);
-                    panel.add(passwordText);
-                    panel.add(updateButton);
-
-                    frame.getContentPane().removeAll();
-                    frame.getContentPane().add(panel, BorderLayout.CENTER);
-
-                    frame.revalidate();
-                    frame.repaint();
-                }
-            }
+        frame.revalidate();
+        frame.repaint();
+    }
+}

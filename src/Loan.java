@@ -41,7 +41,6 @@ public class Loan {
         }
     }
 
-
     public static void returnBook(int bookId) {
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement("UPDATE loans SET return_date = ? WHERE book_id = ? AND return_date IS NULL")) {
@@ -52,6 +51,7 @@ public class Loan {
             e.printStackTrace();
         }
     }
+
     public static boolean isBookLoaned(int bookId) {
         try (Connection conn = DatabaseManager.getConnection()) {
             String query = "SELECT * FROM loans WHERE book_id = ? AND return_date IS NULL";
@@ -84,6 +84,7 @@ public class Loan {
         }
         return loans;
     }
+
     public int getUserId() {
         return userId;
     }
