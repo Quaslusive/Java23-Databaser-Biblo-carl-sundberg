@@ -8,7 +8,6 @@ public class Book {
     private String title;
     private String author;
 
-    // Getters
     public int getId() {
         return id;
     }
@@ -21,7 +20,6 @@ public class Book {
         return author;
     }
 
-    // Setters
     public void setId(int id) {
         this.id = id;
     }
@@ -34,36 +32,19 @@ public class Book {
         this.author = author;
     }
 
-    public static List<Book> searchBooksByTitle(String title) {
+    public static List<Book> searchBooks(String keyword) {
         List<Book> books = new ArrayList<>();
+        String query = "SELECT * FROM books WHERE title LIKE ? OR author LIKE ?";
         try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM books WHERE title LIKE ?")) {
-            stmt.setString(1, "%" + title + "%");
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, "%" + keyword + "%");
+            stmt.setString(2, "%" + keyword + "%");
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 Book book = new Book();
                 book.setId(rs.getInt("id"));
                 book.setTitle(rs.getString("title"));
                 book.setAuthor(rs.getString("author"));
-                books.add(book);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return books;
-    }
-
-    public static List<Book> getAllBooks() {
-        List<Book> books = new ArrayList<>();
-        try (Connection conn = DatabaseManager.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT * FROM books")) {
-            while (rs.next()) {
-                Book book = new Book();
-                book.setId(rs.getInt("id"));
-                book.setTitle(rs.getString("title"));
-                book.setAuthor(rs.getString("author"));
-                // Sätt andra fält
                 books.add(book);
             }
         } catch (SQLException e) {

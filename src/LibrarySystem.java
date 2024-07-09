@@ -6,6 +6,9 @@ import java.util.List;
 public class LibrarySystem {
     private JFrame frame;
     private User loggedInUser;
+    private DefaultTableModel bookTableModel;
+    private JTable bookTable;
+    private JTextField searchField;
 
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
@@ -24,7 +27,7 @@ public class LibrarySystem {
 
     private void initialize() {
         frame = new JFrame();
-        frame.setBounds(100, 100, 450, 300);
+        frame.setBounds(100, 100, 600, 400);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         showLoginScreen();
     }
@@ -68,43 +71,56 @@ public class LibrarySystem {
 
     private void showMainScreen() {
         JPanel panel = new JPanel(new BorderLayout());
+
+        // Create a panel for the top controls
+        JPanel topPanel = new JPanel(new BorderLayout());
+
+        // Create a panel for the logout and update profile buttons
+        JPanel userPanel = new JPanel();
         JButton logoutButton = new JButton("Logout");
         logoutButton.addActionListener(e -> {
             loggedInUser = null;
             showLoginScreen();
         });
-
         JButton updateProfileButton = new JButton("Update Profile");
         updateProfileButton.addActionListener(e -> updateProfile());
 
-        JPanel topPanel = new JPanel();
-        topPanel.add(logoutButton);
-        topPanel.add(updateProfileButton);
+        userPanel.add(logoutButton);
+        userPanel.add(updateProfileButton);
 
+        // Create a panel for the search field and button
+        JPanel searchPanel = new JPanel();
+        searchField = new JTextField(20);
+        JButton searchButton = new JButton("Search");
+        searchButton.addActionListener(e -> searchBooks());
+
+        searchPanel.add(new JLabel("Search:"));
+        searchPanel.add(searchField);
+        searchPanel.add(searchButton);
+
+        // Add the userPanel and searchPanel to the topPanel
+        topPanel.add(userPanel, BorderLayout.NORTH);
+        topPanel.add(searchPanel, BorderLayout.SOUTH);
+
+        // Add the topPanel to the main panel
         panel.add(topPanel, BorderLayout.NORTH);
 
         // Create the table to display books
         String[] columnNames = {"ID", "Title", "Author", "Loan Status"};
-        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
-        JTable table = new JTable(model);
+        bookTableModel = new DefaultTableModel(columnNames, 0);
+        bookTable = new JTable(bookTableModel);
 
-        List<Book> books = Book.searchBooksByTitle(""); // Fetch all books
-        for (Book book : books) {
-            String loanStatus = Loan.isBookLoaned(book.getId()) ? "Loaned" : "Available";
-            model.addRow(new Object[]{book.getId(), book.getTitle(), book.getAuthor(), loanStatus});
-        }
-
-        JScrollPane scrollPane = new JScrollPane(table);
+        JScrollPane scrollPane = new JScrollPane(bookTable);
         panel.add(scrollPane, BorderLayout.CENTER);
 
         JButton loanBookButton = new JButton("Loan Book");
         loanBookButton.addActionListener(e -> {
-            int selectedRow = table.getSelectedRow();
+            int selectedRow = bookTable.getSelectedRow();
             if (selectedRow != -1) {
-                int bookId = (int) model.getValueAt(selectedRow, 0);
+                int bookId = (int) bookTableModel.getValueAt(selectedRow, 0);
                 if (Loan.loanBook(loggedInUser.getId(), bookId)) {
                     JOptionPane.showMessageDialog(frame, "Book loaned successfully.");
-                    model.setValueAt("Loaned", selectedRow, 3);
+                    bookTableModel.setValueAt("Loaned", selectedRow, 3);
                 } else {
                     JOptionPane.showMessageDialog(frame, "Failed to loan book. It might be already loaned out.");
                 }
@@ -115,12 +131,12 @@ public class LibrarySystem {
 
         JButton returnBookButton = new JButton("Return Book");
         returnBookButton.addActionListener(e -> {
-            int selectedRow = table.getSelectedRow();
+            int selectedRow = bookTable.getSelectedRow();
             if (selectedRow != -1) {
-                int bookId = (int) model.getValueAt(selectedRow, 0);
+                int bookId = (int) bookTableModel.getValueAt(selectedRow, 0);
                 Loan.returnBook(bookId);
                 JOptionPane.showMessageDialog(frame, "Book returned successfully.");
-                model.setValueAt("Available", selectedRow, 3);
+                bookTableModel.setValueAt("Available", selectedRow, 3);
             } else {
                 JOptionPane.showMessageDialog(frame, "Please select a book to return.");
             }
@@ -137,6 +153,27 @@ public class LibrarySystem {
 
         frame.revalidate();
         frame.repaint();
+
+        loadAllBooks();
+    }
+
+    private void loadAllBooks() {
+        List<Book> books = Book.searchBooks(""); // Fetch all books
+        updateBookTable(books);
+    }
+
+    private void searchBooks() {
+        String keyword = searchField.getText();
+        List<Book> books = Book.searchBooks(keyword);
+        updateBookTable(books);
+    }
+
+    private void updateBookTable(List<Book> books) {
+        bookTableModel.setRowCount(0); // Clear existing rows
+        for (Book book : books) {
+            String loanStatus = Loan.isBookLoaned(book.getId()) ? "Loaned" : "Available";
+            bookTableModel.addRow(new Object[]{book.getId(), book.getTitle(), book.getAuthor(), loanStatus});
+        }
     }
 
     private void updateProfile() {
