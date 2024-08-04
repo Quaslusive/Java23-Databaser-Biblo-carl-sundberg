@@ -11,7 +11,7 @@ public class Loan {
     private LocalDate loanDate;
     private LocalDate returnDate;
 
-    // No-argument constructor
+    // Constructors
     public Loan() {}
 
     public Loan(int userId, int bookId) {
@@ -20,7 +20,7 @@ public class Loan {
         this.loanDate = LocalDate.now();
     }
 
-    public static boolean loanBook(int userId, int bookId) {
+    public static boolean loanBook(int userId, int bookId, String mediaType) {
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement checkStmt = conn.prepareStatement("SELECT * FROM loans WHERE book_id = ? AND return_date IS NULL")) {
             checkStmt.setInt(1, bookId);
@@ -85,6 +85,7 @@ public class Loan {
         return loans;
     }
 
+    // Getters and setters
     public int getUserId() {
         return userId;
     }

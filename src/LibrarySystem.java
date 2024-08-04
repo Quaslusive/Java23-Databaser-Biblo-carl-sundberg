@@ -118,7 +118,8 @@ public class LibrarySystem {
             int selectedRow = bookTable.getSelectedRow();
             if (selectedRow != -1) {
                 int bookId = (int) bookTableModel.getValueAt(selectedRow, 0);
-                if (Loan.loanBook(loggedInUser.getId(), bookId)) {
+                String mediaType = "book"; // Placeholder, you might want to get this dynamically
+                if (Loan.loanBook(loggedInUser.getId(), bookId, mediaType)) {
                     JOptionPane.showMessageDialog(frame, "Book loaned successfully.");
                     bookTableModel.setValueAt("Loaned", selectedRow, 3);
                 } else {
@@ -142,9 +143,20 @@ public class LibrarySystem {
             }
         });
 
+
+
+        JButton historyButton = new JButton("Loan History");
+        historyButton.addActionListener(e -> showLoanHistory());
+
+
+        JButton loanStatusButton = new JButton("Loan Status");
+        loanStatusButton.addActionListener(e -> showLoanStatus());
+
+
         JPanel bottomPanel = new JPanel();
         bottomPanel.add(loanBookButton);
         bottomPanel.add(returnBookButton);
+        bottomPanel.add(historyButton);
 
         panel.add(bottomPanel, BorderLayout.SOUTH);
 
@@ -156,6 +168,7 @@ public class LibrarySystem {
 
         loadAllBooks();
     }
+
 
     private void loadAllBooks() {
         List<Book> books = Book.searchBooks(""); // Fetch all books
@@ -223,4 +236,80 @@ public class LibrarySystem {
         frame.revalidate();
         frame.repaint();
     }
+
+    private void showLoanHistory() {
+        List<Loan> loans = Loan.getUserLoans(loggedInUser.getId());
+
+        String[] columnNames = {"Book ID", "Title", "Loan Date", "Return Date"};
+        DefaultTableModel historyTableModel = new DefaultTableModel(columnNames, 0);
+        JTable historyTable = new JTable(historyTableModel);
+
+        for (Loan loan : loans) {
+            Book book = Book.getBookById(loan.getBookId());
+            historyTableModel.addRow(new Object[]{
+                    loan.getBookId(),
+                    book != null ? book.getTitle() : "Unknown",
+                    loan.getLoanDate(),
+                    loan.getReturnDate()
+            });
+        }
+
+        JPanel panel = new JPanel(new BorderLayout());
+        JScrollPane scrollPane = new JScrollPane(historyTable);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        JButton backButton = new JButton("Tillbaka");
+        backButton.addActionListener(e -> showMainScreen());
+        panel.add(backButton, BorderLayout.SOUTH);
+
+        frame.getContentPane().removeAll();
+        frame.getContentPane().add(panel);
+
+        frame.revalidate();
+        frame.repaint();
+    }
+    private void showLoanStatus() {
+        List<Loan> loans = Loan.getUserLoans(loggedInUser.getId());
+
+        String[] columnNames = {"Book ID", "Title", "Loan Date", "Due Date"};
+        DefaultTableModel statusTableModel = new DefaultTableModel(columnNames, 0);
+        JTable statusTable = new JTable(statusTableModel);
+
+        for (Loan loan : loans) {
+            if (loan.getReturnDate() == null) { // Only show currently loaned books
+                Book book = Book.getBookById(loan.getBookId());
+                statusTableModel.addRow(new Object[]{
+                        loan.getBookId(),
+                        book != null ? book.getTitle() : "Unknown",
+                        loan.getLoanDate(),
+                        loan.getLoanDate().plusDays(getLoanDuration("book")) // Assuming "book" is the media type
+                });
+            }
+        }
+
+        JPanel panel = new JPanel(new BorderLayout());
+        JScrollPane scrollPane = new JScrollPane(statusTable);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        JButton backButton = new JButton("Tillbaka");
+        backButton.addActionListener(e -> showMainScreen());
+        panel.add(backButton, BorderLayout.SOUTH);
+
+        frame.getContentPane().removeAll();
+        frame.getContentPane().add(panel);
+
+        frame.revalidate();
+        frame.repaint();
+    }
+
+    private int getLoanDuration(String mediaType) {
+        if ("book".equals(mediaType)) {
+            return 30;
+        } else if ("journal".equals(mediaType) || "other".equals(mediaType)) {
+            return 10;
+        }
+        return 0; // Default value, should not happen if media type is correct
+    }
+
+
 }
