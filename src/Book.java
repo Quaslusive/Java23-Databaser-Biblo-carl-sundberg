@@ -8,6 +8,8 @@ public class Book {
     private String title;
     private String author;
 
+    private String media_type;
+
     public int getId() {
         return id;
     }
@@ -32,6 +34,13 @@ public class Book {
         this.author = author;
     }
 
+    public String getMedia_type() {
+        return media_type;
+    }
+
+    public void setMedia_type(String media_type) {
+        this.media_type = media_type;
+    }
 
 
     public static List<Book> searchBooks(String keyword) {

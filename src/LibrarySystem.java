@@ -30,6 +30,12 @@ public class LibrarySystem {
         frame.setBounds(100, 100, 600, 400);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         showLoginScreen();
+        frame.setTitle("Fulköpings Biblioteket");
+
+        ImageIcon icon = new ImageIcon("src/asset/icon-image.png");
+
+        frame.setIconImage(icon.getImage());
+
     }
 
     private void showLoginScreen() {
@@ -157,6 +163,7 @@ public class LibrarySystem {
         bottomPanel.add(loanBookButton);
         bottomPanel.add(returnBookButton);
         bottomPanel.add(historyButton);
+        bottomPanel.add(loanStatusButton);
 
         panel.add(bottomPanel, BorderLayout.SOUTH);
 
@@ -305,7 +312,7 @@ public class LibrarySystem {
     private int getLoanDuration(String mediaType) {
         if ("book".equals(mediaType)) {
             return 30;
-        } else if ("journal".equals(mediaType) || "other".equals(mediaType)) {
+        } else if ("tidning".equals(mediaType) || "other".equals(mediaType)) {
             return 10;
         }
         return 0; // Default value, should not happen if media type is correct
