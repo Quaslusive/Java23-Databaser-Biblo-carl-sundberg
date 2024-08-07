@@ -289,7 +289,7 @@ public class LibrarySystem {
                         loan.getBookId(),
                         book != null ? book.getTitle() : "Unknown",
                         loan.getLoanDate(),
-                        loan.getLoanDate().plusDays(getLoanDuration("book")) // Assuming "book" is the media type
+                        Loan.calculateDueDate(loan.getLoanDate(), loan.getMediaType())
                 });
             }
         }
@@ -308,6 +308,7 @@ public class LibrarySystem {
         frame.revalidate();
         frame.repaint();
     }
+
 
     private int getLoanDuration(String mediaType) {
         if ("book".equals(mediaType)) {
