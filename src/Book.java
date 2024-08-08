@@ -45,7 +45,7 @@ public class Book {
 
     public static List<Book> searchBooks(String keyword) {
         List<Book> books = new ArrayList<>();
-        String query = "SELECT * FROM books WHERE title LIKE ? OR author LIKE ?";
+        String query = "SELECT * FROM books WHERE title LIKE ? OR author LIKE ? ORDER BY title ASC ";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, "%" + keyword + "%");

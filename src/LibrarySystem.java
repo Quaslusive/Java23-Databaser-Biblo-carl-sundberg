@@ -309,15 +309,4 @@ public class LibrarySystem {
         frame.repaint();
     }
 
-
-    private int getLoanDuration(String mediaType) {
-        if ("book".equals(mediaType)) {
-            return 30;
-        } else if ("tidning".equals(mediaType) || "other".equals(mediaType)) {
-            return 10;
-        }
-        return 0; // Default value, should not happen if media type is correct
-    }
-
-
 }

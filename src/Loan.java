@@ -70,7 +70,7 @@ public class Loan {
     public static List<Loan> getUserLoans(int userId) {
         List<Loan> loans = new ArrayList<>();
         try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM loans WHERE user_id = ?")) {
+             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM loans WHERE user_id = ? ORDER BY return_date ASC ")) {
             stmt.setInt(1, userId);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
