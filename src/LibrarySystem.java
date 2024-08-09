@@ -1,6 +1,7 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.time.LocalDate;
 import java.util.List;
 
 public class LibrarySystem {
@@ -30,7 +31,7 @@ public class LibrarySystem {
         frame.setBounds(100, 100, 600, 400);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         showLoginScreen();
-        frame.setTitle("Fulköpings Biblioteket");
+        frame.setTitle("Fulköping Biblioteket");
 
         ImageIcon icon = new ImageIcon("src/asset/icon-image.png");
 
@@ -39,27 +40,22 @@ public class LibrarySystem {
     }
 
     private void showLoginScreen() {
-        JPanel panel = new JPanel();
-        frame.getContentPane().add(panel, BorderLayout.CENTER);
-        panel.setLayout(new GridLayout(3, 2, 10, 10));
+        // Rensa alla tidigare komponenter från ramen
+        frame.getContentPane().removeAll();
+
+        // Skapa panelen för inloggningsskärmen
+        JPanel loginPanel = new JPanel(new GridLayout(3, 2));
 
         JLabel userLabel = new JLabel("Username:");
-        panel.add(userLabel);
+        JTextField userField = new JTextField(20);
 
-        JTextField userText = new JTextField();
-        panel.add(userText);
-        userText.setColumns(10);
-
-        JLabel passwordLabel = new JLabel("Password:");
-        panel.add(passwordLabel);
-
-        JPasswordField passwordText = new JPasswordField();
-        panel.add(passwordText);
+        JLabel passLabel = new JLabel("Password:");
+        JPasswordField passField = new JPasswordField(20);
 
         JButton loginButton = new JButton("Login");
         loginButton.addActionListener(e -> {
-            String username = userText.getText();
-            String password = new String(passwordText.getPassword());
+            String username = userField.getText();
+            String password = new String(passField.getPassword());
 
             User user = User.login(username, password);
             if (user != null) {
@@ -69,8 +65,17 @@ public class LibrarySystem {
                 JOptionPane.showMessageDialog(frame, "Invalid username or password.");
             }
         });
-        panel.add(loginButton);
+        loginPanel.add(userLabel);
+        loginPanel.add(userField);
+        loginPanel.add(passLabel);
+        loginPanel.add(passField);
+        loginPanel.add(new JLabel()); // Tom plats för layoutens skull
+        loginPanel.add(loginButton);
 
+        // Lägg till loginPanel till ramen
+        frame.getContentPane().add(loginPanel);
+
+        // Uppdatera och måla om ramen
         frame.revalidate();
         frame.repaint();
     }
@@ -112,7 +117,7 @@ public class LibrarySystem {
         panel.add(topPanel, BorderLayout.NORTH);
 
         // Create the table to display books
-        String[] columnNames = {"ID", "Title", "Author", "Loan Status"};
+        String[] columnNames = {"Ordningsnummer", "Titel", "Författare/Skapare", "Media", "Status"};
         bookTableModel = new DefaultTableModel(columnNames, 0);
         bookTable = new JTable(bookTableModel);
 
@@ -125,7 +130,7 @@ public class LibrarySystem {
             if (selectedRow != -1) {
                 int bookId = (int) bookTableModel.getValueAt(selectedRow, 0);
                 String mediaType = "book"; // Placeholder, you might want to get this dynamically
-                if (Loan.loanBook(loggedInUser.getId(), bookId, mediaType)) {
+                if (Loan.loanBook(loggedInUser.getId(), bookId)) {
                     JOptionPane.showMessageDialog(frame, "Book loaned successfully.");
                     bookTableModel.setValueAt("Loaned", selectedRow, 3);
                 } else {
@@ -173,14 +178,15 @@ public class LibrarySystem {
         frame.revalidate();
         frame.repaint();
 
-        loadAllBooks();
+        Book.loadAllBooks(bookTableModel);
     }
 
 
-    private void loadAllBooks() {
+ /*   private void loadAllBooks() {
         List<Book> books = Book.searchBooks(""); // Fetch all books
         updateBookTable(books);
-    }
+    }*/
+
 
     private void searchBooks() {
         String keyword = searchField.getText();
@@ -191,7 +197,7 @@ public class LibrarySystem {
     private void updateBookTable(List<Book> books) {
         bookTableModel.setRowCount(0); // Clear existing rows
         for (Book book : books) {
-            String loanStatus = Loan.isBookLoaned(book.getId()) ? "Loaned" : "Available";
+            String loanStatus = Loan.isBookLoaned(book.getId()) ? "Lånad" : "Tillgänglig";
             bookTableModel.addRow(new Object[]{book.getId(), book.getTitle(), book.getAuthor(), loanStatus});
         }
     }
@@ -285,12 +291,26 @@ public class LibrarySystem {
         for (Loan loan : loans) {
             if (loan.getReturnDate() == null) { // Only show currently loaned books
                 Book book = Book.getBookById(loan.getBookId());
-                statusTableModel.addRow(new Object[]{
-                        loan.getBookId(),
-                        book != null ? book.getTitle() : "Unknown",
-                        loan.getLoanDate(),
-                        Loan.calculateDueDate(loan.getLoanDate(), loan.getMediaType())
-                });
+                if (book != null) {
+
+                    LocalDate dueDate = Book.calculateDueDate(loan.getLoanDate(), book.getMedia_type());
+                    statusTableModel.addRow(new Object[]{
+                            loan.getBookId(),
+                            book.getTitle(),
+                            loan.getLoanDate(),
+                            dueDate
+
+                    });
+
+                } else {
+                    statusTableModel.addRow(new Object[]{
+                            loan.getBookId(),
+                            "okänd",
+                            loan.getLoanDate(),
+                            "okänd",
+                    });
+                }
+
             }
         }
 
