@@ -19,7 +19,7 @@ public class Loan {
         this.loanDate = LocalDate.now();
     }
 
-    public static boolean loanBook(int userId, int bookId) {
+    public static boolean loanBook(int userId, int bookId, String media_type) {
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement checkStmt = conn.prepareStatement("SELECT * FROM loans WHERE book_id = ? AND return_date IS NULL")) {
             checkStmt.setInt(1, bookId);
@@ -86,7 +86,8 @@ public class Loan {
     public static List<Loan> getUserLoans(int userId) {
         List<Loan> loans = new ArrayList<>();
         try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM loans WHERE user_id = ? ORDER BY return_date ASC")) {
+             PreparedStatement stmt = conn.prepareStatement(
+                     "SELECT * FROM loans WHERE user_id = ? ORDER BY return_date ASC")) {
             stmt.setInt(1, userId);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -94,7 +95,8 @@ public class Loan {
                 loan.setUserId(rs.getInt("user_id"));
                 loan.setBookId(rs.getInt("book_id"));
                 loan.setLoanDate(rs.getDate("loan_date").toLocalDate());
-                loan.setReturnDate(rs.getDate("return_date") != null ? rs.getDate("return_date").toLocalDate() : null);
+                loan.setReturnDate(rs.getDate(
+                        "return_date") != null ? rs.getDate("return_date").toLocalDate() : null);
                 loans.add(loan);
             }
         } catch (SQLException e) {

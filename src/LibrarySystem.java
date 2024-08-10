@@ -11,6 +11,10 @@ public class LibrarySystem {
     private JTable bookTable;
     private JTextField searchField;
 
+    public LibrarySystem() {
+        initialize();
+    }
+
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
             try {
@@ -20,10 +24,6 @@ public class LibrarySystem {
                 e.printStackTrace();
             }
         });
-    }
-
-    public LibrarySystem() {
-        initialize();
     }
 
     private void initialize() {
@@ -52,7 +52,7 @@ public class LibrarySystem {
         JLabel passLabel = new JLabel("Lösenord:");
         JPasswordField passField = new JPasswordField(20);
 
-        JButton loginButton = new JButton("Inloggning");
+        JButton loginButton = new JButton("Logga in");
         loginButton.addActionListener(e -> {
             String username = userField.getText();
             String password = new String(passField.getPassword());
@@ -65,11 +65,15 @@ public class LibrarySystem {
                 JOptionPane.showMessageDialog(frame, "Ogiltigt användarnamn eller lösenord.");
             }
         });
+
+        JLabel infoLabel = new JLabel("<html> Användarnamn : admin <br> Lösenord: admin </html>");
+
+
         loginPanel.add(userLabel);
         loginPanel.add(userField);
         loginPanel.add(passLabel);
         loginPanel.add(passField);
-        loginPanel.add(new JLabel()); // Tom plats för layoutens skull
+        loginPanel.add(infoLabel);
         loginPanel.add(loginButton);
 
         // Lägg till loginPanel till ramen
@@ -86,9 +90,11 @@ public class LibrarySystem {
         // Create a panel for the top controls
         JPanel topPanel = new JPanel(new BorderLayout());
 
+        frame.setTitle("Fulköping Biblioteket - In loggad som: " + loggedInUser.getName());
+
         // Create a panel for the logout and update profile buttons
         JPanel userPanel = new JPanel();
-        JButton logoutButton = new JButton("Utloggning");
+        JButton logoutButton = new JButton("Logga ut");
         logoutButton.addActionListener(e -> {
             loggedInUser = null;
             showLoginScreen();
@@ -117,7 +123,7 @@ public class LibrarySystem {
         panel.add(topPanel, BorderLayout.NORTH);
 
         // Create the table to display books
-        String[] columnNames = {"Ordningsnummer", "Titel", "Författare/Skapare", "Media", "Status"};
+        String[] columnNames = {"Book ID", "Titel", "Författare/Skapare", "Media", "Status"};
         bookTableModel = new DefaultTableModel(columnNames, 0);
         bookTable = new JTable(bookTableModel);
 
@@ -129,8 +135,9 @@ public class LibrarySystem {
             int selectedRow = bookTable.getSelectedRow();
             if (selectedRow != -1) {
                 int bookId = (int) bookTableModel.getValueAt(selectedRow, 0);
+                String media_type = (String) bookTableModel.getValueAt(selectedRow, 4);
 
-                if (Loan.loanBook(loggedInUser.getId(), bookId)) {
+                if (Loan.loanBook(loggedInUser.getId(), bookId, media_type)) {
                     JOptionPane.showMessageDialog(frame, "Media har utlånats.");
                     bookTableModel.setValueAt("Utlånad", selectedRow, 3);
                 } else {
@@ -148,17 +155,16 @@ public class LibrarySystem {
                 int bookId = (int) bookTableModel.getValueAt(selectedRow, 0);
 
                 if (Loan.returnBook(loggedInUser.getId(), bookId)) {
-                    JOptionPane.showMessageDialog(frame,"Median returnerades framgångsrikt.");
+                    JOptionPane.showMessageDialog(frame, "Median returnerades framgångsrikt.");
                     bookTableModel.setValueAt("Tillgänglig", selectedRow, 3); // Uppdatera status i tabellen
                 } else {
-                    JOptionPane.showMessageDialog(frame, "Det gick inte att returnera median. Du kan bara lämna tillbaka media du har lånat.");
+                    JOptionPane.showMessageDialog(frame,
+                            "Det gick inte att returnera median. Du kan bara lämna tillbaka media du har lånat.");
                 }
             } else {
                 JOptionPane.showMessageDialog(frame, "Välj en media att returnera.");
             }
         });
-
-
 
 
         JButton historyButton = new JButton("Lånehistorik");
@@ -279,6 +285,7 @@ public class LibrarySystem {
         frame.revalidate();
         frame.repaint();
     }
+
     private void showLoanStatus() {
         List<Loan> loans = Loan.getUserLoans(loggedInUser.getId());
 
