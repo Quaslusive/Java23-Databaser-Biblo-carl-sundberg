@@ -44,16 +44,31 @@ public class Loan {
         }
     }
 
-    public static void returnBook(int bookId) {
+    public static boolean returnBook(int userId, int bookId) {
         try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("UPDATE loans SET return_date = ? WHERE book_id = ? AND return_date IS NULL")) {
-            stmt.setDate(1, Date.valueOf(LocalDate.now()));
-            stmt.setInt(2, bookId);
-            stmt.executeUpdate();
+             PreparedStatement checkStmt = conn.prepareStatement("SELECT * FROM loans WHERE book_id = ? AND user_id = ? AND return_date IS NULL")) {
+            checkStmt.setInt(1, bookId);
+            checkStmt.setInt(2, userId);
+            ResultSet rs = checkStmt.executeQuery();
+
+            if (rs.next()) {
+                // Boken är utlånad av den inloggade användaren och kan returneras
+                PreparedStatement returnStmt = conn.prepareStatement("UPDATE loans SET return_date = ? WHERE book_id = ? AND user_id = ?");
+                returnStmt.setDate(1, Date.valueOf(LocalDate.now()));
+                returnStmt.setInt(2, bookId);
+                returnStmt.setInt(3, userId);
+                returnStmt.executeUpdate();
+                return true;
+            } else {
+                // Boken är antingen inte utlånad av den här användaren eller redan återlämnad
+                return false;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
+            return false;
         }
     }
+
 
     public static boolean isBookLoaned(int bookId) {
         try (Connection conn = DatabaseManager.getConnection()) {

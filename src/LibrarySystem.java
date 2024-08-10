@@ -46,13 +46,13 @@ public class LibrarySystem {
         // Skapa panelen för inloggningsskärmen
         JPanel loginPanel = new JPanel(new GridLayout(3, 2));
 
-        JLabel userLabel = new JLabel("Username:");
+        JLabel userLabel = new JLabel("Användarnamn:");
         JTextField userField = new JTextField(20);
 
-        JLabel passLabel = new JLabel("Password:");
+        JLabel passLabel = new JLabel("Lösenord:");
         JPasswordField passField = new JPasswordField(20);
 
-        JButton loginButton = new JButton("Login");
+        JButton loginButton = new JButton("Inloggning");
         loginButton.addActionListener(e -> {
             String username = userField.getText();
             String password = new String(passField.getPassword());
@@ -62,7 +62,7 @@ public class LibrarySystem {
                 loggedInUser = user;
                 showMainScreen();
             } else {
-                JOptionPane.showMessageDialog(frame, "Invalid username or password.");
+                JOptionPane.showMessageDialog(frame, "Ogiltigt användarnamn eller lösenord.");
             }
         });
         loginPanel.add(userLabel);
@@ -88,12 +88,12 @@ public class LibrarySystem {
 
         // Create a panel for the logout and update profile buttons
         JPanel userPanel = new JPanel();
-        JButton logoutButton = new JButton("Logout");
+        JButton logoutButton = new JButton("Utloggning");
         logoutButton.addActionListener(e -> {
             loggedInUser = null;
             showLoginScreen();
         });
-        JButton updateProfileButton = new JButton("Update Profile");
+        JButton updateProfileButton = new JButton("Uppdatera profil");
         updateProfileButton.addActionListener(e -> updateProfile());
 
         userPanel.add(logoutButton);
@@ -102,10 +102,10 @@ public class LibrarySystem {
         // Create a panel for the search field and button
         JPanel searchPanel = new JPanel();
         searchField = new JTextField(20);
-        JButton searchButton = new JButton("Search");
+        JButton searchButton = new JButton("Söka");
         searchButton.addActionListener(e -> searchBooks());
 
-        searchPanel.add(new JLabel("Search:"));
+        searchPanel.add(new JLabel("Söka:"));
         searchPanel.add(searchField);
         searchPanel.add(searchButton);
 
@@ -124,43 +124,48 @@ public class LibrarySystem {
         JScrollPane scrollPane = new JScrollPane(bookTable);
         panel.add(scrollPane, BorderLayout.CENTER);
 
-        JButton loanBookButton = new JButton("Loan Book");
+        JButton loanBookButton = new JButton("Låna Media");
         loanBookButton.addActionListener(e -> {
             int selectedRow = bookTable.getSelectedRow();
             if (selectedRow != -1) {
                 int bookId = (int) bookTableModel.getValueAt(selectedRow, 0);
-                String mediaType = "book"; // Placeholder, you might want to get this dynamically
+
                 if (Loan.loanBook(loggedInUser.getId(), bookId)) {
-                    JOptionPane.showMessageDialog(frame, "Book loaned successfully.");
-                    bookTableModel.setValueAt("Loaned", selectedRow, 3);
+                    JOptionPane.showMessageDialog(frame, "Media har utlånats.");
+                    bookTableModel.setValueAt("Utlånad", selectedRow, 3);
                 } else {
-                    JOptionPane.showMessageDialog(frame, "Failed to loan book. It might be already loaned out.");
+                    JOptionPane.showMessageDialog(frame, "Det gick inte att låna median.");
                 }
             } else {
-                JOptionPane.showMessageDialog(frame, "Please select a book to loan.");
+                JOptionPane.showMessageDialog(frame, "Välj en bok att låna.");
             }
         });
 
-        JButton returnBookButton = new JButton("Return Book");
+        JButton returnBookButton = new JButton("Returnera media");
         returnBookButton.addActionListener(e -> {
             int selectedRow = bookTable.getSelectedRow();
             if (selectedRow != -1) {
                 int bookId = (int) bookTableModel.getValueAt(selectedRow, 0);
-                Loan.returnBook(bookId);
-                JOptionPane.showMessageDialog(frame, "Book returned successfully.");
-                bookTableModel.setValueAt("Available", selectedRow, 3);
+
+                if (Loan.returnBook(loggedInUser.getId(), bookId)) {
+                    JOptionPane.showMessageDialog(frame,"Median returnerades framgångsrikt.");
+                    bookTableModel.setValueAt("Tillgänglig", selectedRow, 3); // Uppdatera status i tabellen
+                } else {
+                    JOptionPane.showMessageDialog(frame, "Det gick inte att returnera median. Du kan bara lämna tillbaka media du har lånat.");
+                }
             } else {
-                JOptionPane.showMessageDialog(frame, "Please select a book to return.");
+                JOptionPane.showMessageDialog(frame, "Välj en media att returnera.");
             }
         });
 
 
 
-        JButton historyButton = new JButton("Loan History");
+
+        JButton historyButton = new JButton("Lånehistorik");
         historyButton.addActionListener(e -> showLoanHistory());
 
 
-        JButton loanStatusButton = new JButton("Loan Status");
+        JButton loanStatusButton = new JButton("Lånestatus");
         loanStatusButton.addActionListener(e -> showLoanStatus());
 
 
@@ -181,13 +186,6 @@ public class LibrarySystem {
         Book.loadAllBooks(bookTableModel);
     }
 
-
- /*   private void loadAllBooks() {
-        List<Book> books = Book.searchBooks(""); // Fetch all books
-        updateBookTable(books);
-    }*/
-
-
     private void searchBooks() {
         String keyword = searchField.getText();
         List<Book> books = Book.searchBooks(keyword);
@@ -205,16 +203,16 @@ public class LibrarySystem {
     private void updateProfile() {
         JPanel panel = new JPanel(new GridLayout(5, 2));
 
-        JLabel nameLabel = new JLabel("Name:");
+        JLabel nameLabel = new JLabel("Namn:");
         JTextField nameText = new JTextField(loggedInUser.getName());
 
         JLabel emailLabel = new JLabel("Email:");
         JTextField emailText = new JTextField(loggedInUser.getEmail());
 
-        JLabel passwordLabel = new JLabel("Password:");
+        JLabel passwordLabel = new JLabel("Lösenord:");
         JPasswordField passwordText = new JPasswordField();
 
-        JButton updateButton = new JButton("Update");
+        JButton updateButton = new JButton("Uppdatera");
         updateButton.addActionListener(e -> {
             String name = nameText.getText();
             String email = emailText.getText();
@@ -225,9 +223,9 @@ public class LibrarySystem {
             loggedInUser.setPassword(password);
 
             if (loggedInUser.updateProfile(name, email, password)) {
-                JOptionPane.showMessageDialog(frame, "Profile updated successfully.");
+                JOptionPane.showMessageDialog(frame, "Profilen har uppdaterats. :D");
             } else {
-                JOptionPane.showMessageDialog(frame, "Failed to update profile.");
+                JOptionPane.showMessageDialog(frame, "Det gick inte att uppdatera profilen. :(");
             }
         });
 
@@ -253,7 +251,7 @@ public class LibrarySystem {
     private void showLoanHistory() {
         List<Loan> loans = Loan.getUserLoans(loggedInUser.getId());
 
-        String[] columnNames = {"Book ID", "Title", "Loan Date", "Return Date"};
+        String[] columnNames = {"Book ID", "titel", "Lånedatum", "Returdatum"};
         DefaultTableModel historyTableModel = new DefaultTableModel(columnNames, 0);
         JTable historyTable = new JTable(historyTableModel);
 
@@ -261,7 +259,7 @@ public class LibrarySystem {
             Book book = Book.getBookById(loan.getBookId());
             historyTableModel.addRow(new Object[]{
                     loan.getBookId(),
-                    book != null ? book.getTitle() : "Unknown",
+                    book != null ? book.getTitle() : "Okänd",
                     loan.getLoanDate(),
                     loan.getReturnDate()
             });
@@ -284,7 +282,7 @@ public class LibrarySystem {
     private void showLoanStatus() {
         List<Loan> loans = Loan.getUserLoans(loggedInUser.getId());
 
-        String[] columnNames = {"Book ID", "Title", "Loan Date", "Due Date"};
+        String[] columnNames = {"Book ID", "titel", "Lånedatum", "Returdatum"};
         DefaultTableModel statusTableModel = new DefaultTableModel(columnNames, 0);
         JTable statusTable = new JTable(statusTableModel);
 
