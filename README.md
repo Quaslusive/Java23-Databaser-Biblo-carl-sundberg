@@ -16,7 +16,7 @@
 
 ![image](https://github.com/user-attachments/assets/26c845bc-3987-4d08-a6fd-359654ed7b20)
 
-#### Lånhitorik
+#### Lånhistorik
 ![image](https://github.com/user-attachments/assets/874d5ce1-5bb9-404e-abb1-f5d8b84eb733)
 
 #### Lånstatus
