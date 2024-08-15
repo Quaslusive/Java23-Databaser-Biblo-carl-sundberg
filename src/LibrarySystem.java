@@ -133,10 +133,10 @@ public class LibrarySystem {
                     JOptionPane.showMessageDialog(frame, "Media har utlånats.");
                     bookTableModel.setValueAt("Utlånad", selectedRow, 4);
                 } else {
-                    JOptionPane.showMessageDialog(frame, "Det gick inte att låna median.");
+                    JOptionPane.showMessageDialog(frame, "Det gick inte att låna.");
                 }
             } else {
-                JOptionPane.showMessageDialog(frame, "Välj en bok att låna.");
+                JOptionPane.showMessageDialog(frame, "Välj en media att låna.");
             }
         });
 
@@ -147,11 +147,11 @@ public class LibrarySystem {
                 int bookId = (int) bookTableModel.getValueAt(selectedRow, 0);
 
                 if (Loan.returnBook(loggedInUser.getId(), bookId)) {
-                    JOptionPane.showMessageDialog(frame, "Median har returnerats.");
+                    JOptionPane.showMessageDialog(frame, "Media har returnerats.");
                     bookTableModel.setValueAt("Tillgänglig", selectedRow, 4); // Uppdatera status i tabellen
                 } else {
                     JOptionPane.showMessageDialog(frame,
-                            "Det gick inte att returnera median. Du kan bara lämna tillbaka media du har lånat.");
+                            "Det gick inte att returnera. Du kan bara lämna tillbaka media du har lånat.");
                 }
             } else {
                 JOptionPane.showMessageDialog(frame, "Välj en media att returnera.");
@@ -250,7 +250,7 @@ public class LibrarySystem {
     private void showLoanHistory() {
         List<Loan> loans = Loan.getUserLoans(loggedInUser.getId());
 
-        String[] columnNames = {"Book ID", "titel", "Lånedatum", "Returdatum"};
+        String[] columnNames = {"Book ID", "Titel", "Lånedatum", "Returdatum"};
         DefaultTableModel historyTableModel = new DefaultTableModel(columnNames, 0);
         JTable historyTable = new JTable(historyTableModel);
 
@@ -282,7 +282,7 @@ public class LibrarySystem {
     private void showLoanStatus() {
         List<Loan> loans = Loan.getUserLoans(loggedInUser.getId());
 
-        String[] columnNames = {"Book ID", "titel", "Lånedatum", "Returdatum"};
+        String[] columnNames = {"Book ID", "Titel", "Lånedatum", "Returdatum"};
         DefaultTableModel statusTableModel = new DefaultTableModel(columnNames, 0);
         JTable statusTable = new JTable(statusTableModel);
 
