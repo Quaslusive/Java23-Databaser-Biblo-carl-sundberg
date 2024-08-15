@@ -13,7 +13,7 @@ public class Book {
 
 
     public static void loadAllBooks(DefaultTableModel bookTableModel) {
-            bookTableModel.setRowCount(0); // Clear the table
+            bookTableModel.setRowCount(0);
             try (Connection conn = DatabaseManager.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(
                          "SELECT id, title, author, media_type FROM books ORDER BY title ASC")) {
@@ -69,7 +69,6 @@ public class Book {
                 book.setTitle(rs.getString("title"));
                 book.setAuthor(rs.getString("author"));
                 book.setMedia_type(rs.getString("media_type"));
-                // Set other fields as needed
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -77,7 +76,7 @@ public class Book {
         return book;
     }
 
-    // Helper method to calculate due date
+    // Beräkna förfallodatum
     public static LocalDate calculateDueDate(LocalDate loanDate, String media_type) {
         if ("Tidning".equals(media_type) || "Video".equals(media_type) || "TV-spel".equals(media_type)
                 || "annat".equals(media_type)) {

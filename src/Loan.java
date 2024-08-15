@@ -10,14 +10,6 @@ public class Loan {
     private LocalDate loanDate;
     private LocalDate returnDate;
 
-    // Constructors
-    public Loan() {}
-
-    public Loan(int userId, int bookId) {
-        this.userId = userId;
-        this.bookId = bookId;
-        this.loanDate = LocalDate.now();
-    }
 
     public static boolean loanBook(int userId, int bookId, String media_type) {
         try (Connection conn = DatabaseManager.getConnection();
@@ -25,11 +17,8 @@ public class Loan {
             checkStmt.setInt(1, bookId);
             ResultSet rs = checkStmt.executeQuery();
             if (rs.next()) {
-                return false; // Book is already loaned out
+                return false; // Median är redan utlånad
             }
-
-            Book book = Book.getBookById(bookId); // Hämta boken för att få media_type
-            LocalDate dueDate = Book.calculateDueDate(LocalDate.now(), book.getMedia_type());
 
             PreparedStatement loanStmt = conn.prepareStatement("INSERT INTO loans (user_id, book_id, loan_date) VALUES (?, ?, ?)");
             loanStmt.setInt(1, userId);
@@ -52,7 +41,7 @@ public class Loan {
             ResultSet rs = checkStmt.executeQuery();
 
             if (rs.next()) {
-                // Boken är utlånad av den inloggade användaren och kan returneras
+                // Median är utlånad av den inloggade användaren och kan returneras
                 PreparedStatement returnStmt = conn.prepareStatement("UPDATE loans SET return_date = ? WHERE book_id = ? AND user_id = ?");
                 returnStmt.setDate(1, Date.valueOf(LocalDate.now()));
                 returnStmt.setInt(2, bookId);
@@ -60,7 +49,7 @@ public class Loan {
                 returnStmt.executeUpdate();
                 return true;
             } else {
-                // Boken är antingen inte utlånad av den här användaren eller redan återlämnad
+                // Median är antingen inte utlånad av den här användaren eller redan återlämnad
                 return false;
             }
         } catch (SQLException e) {
@@ -105,10 +94,6 @@ public class Loan {
         return loans;
     }
 
-    // Getters and setters
-    public int getUserId() {
-        return userId;
-    }
 
     public void setUserId(int userId) {
         this.userId = userId;
