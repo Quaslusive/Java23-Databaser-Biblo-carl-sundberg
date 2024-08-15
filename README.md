@@ -7,6 +7,7 @@
 ### Förutsättningar:
 
     MySQL Database: phpMyAdmin 
+    Web Server: XAMPP eller liknande
     Importera SQL fil: "dblibrary.sql" 
 
 
